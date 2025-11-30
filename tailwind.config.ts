@@ -57,6 +57,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "blue-black": "hsl(var(--blue-black))",
+        grey: "hsl(var(--grey))",
+        "med-grey": "hsl(var(--med-grey))",
+        "light-grey": "hsl(var(--light-grey))",
       },
       borderRadius: {
         lg: "var(--radius)",
