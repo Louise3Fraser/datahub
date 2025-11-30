@@ -17,7 +17,8 @@ interface TaskCardProps {
 
 const tagStyles = {
   work: "bg-[hsl(var(--tag-work-bg))] text-[hsl(var(--tag-work-text))]",
-  planning: "bg-[hsl(var(--tag-planning-bg))] text-[hsl(var(--tag-planning-text))]",
+  planning:
+    "bg-[hsl(var(--tag-planning-bg))] text-[hsl(var(--tag-planning-text))]",
   chores: "bg-[hsl(var(--tag-chores-bg))] text-[hsl(var(--tag-chores-text))]",
   social: "bg-[hsl(var(--tag-social-bg))] text-[hsl(var(--tag-social-text))]",
   health: "bg-[hsl(var(--tag-health-bg))] text-[hsl(var(--tag-health-text))]",
@@ -80,8 +81,13 @@ export function TaskCard({
 
       <div className="flex flex-col gap-[15px]">
         <div className="flex items-center gap-[5px]">
-          <Flag className="h-[14px] w-[14px] stroke-[#959595]" strokeWidth={1.25} />
-          <span className="text-[13.5px] font-medium text-[#959595]">{dueDate}</span>
+          <Flag
+            className="h-[14px] w-[14px] stroke-[#959595]"
+            strokeWidth={1.25}
+          />
+          <span className="text-[13.5px] font-medium text-[#959595]">
+            {dueDate}
+          </span>
         </div>
 
         <div className="flex items-center gap-[5px]">
@@ -111,16 +117,28 @@ export function TaskCard({
               className="h-[14px] w-[14px] stroke-[#959595]"
               strokeWidth={1.25}
             />
-            <span className="text-[13.5px] font-medium text-[#959595]">{comments}</span>
+            <span className="text-[13.5px] font-medium text-[#959595]">
+              {comments}
+            </span>
           </div>
           <div className="flex items-center gap-[3px]">
-            <Link2 className="h-[14px] w-[14px] stroke-[#959595]" strokeWidth={1.25} />
-            <span className="text-[13.5px] font-medium text-[#959595]">{links}</span>
+            <Link2
+              className="h-[14px] w-[14px] stroke-[#959595]"
+              strokeWidth={1.25}
+            />
+            <span className="text-[13.5px] font-medium text-[#959595]">
+              {links}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-[3px]">
-          <Clock className="h-[14px] w-[14px] stroke-[#959595]" strokeWidth={1.25} />
-          <span className="text-[13.5px] font-medium text-[#959595]">{timeRemaining}</span>
+          <Clock
+            className="h-[14px] w-[14px] stroke-[#959595]"
+            strokeWidth={1.25}
+          />
+          <span className="text-[13.5px] font-medium text-[#959595]">
+            {timeRemaining}
+          </span>
         </div>
       </div>
     </div>

@@ -10,7 +10,8 @@ export default function Dashboard() {
             Dashboard
           </h1>
           <p className="text-[hsl(var(--med-grey))]">
-            This page is under construction. Continue prompting to fill in the content.
+            This page is under construction. Continue prompting to fill in the
+            content.
           </p>
         </div>
       </div>

@@ -223,12 +223,19 @@ export function Sidebar() {
       </div>
 
       <div className="flex h-[29px] items-center gap-[6px] rounded-md bg-[rgba(210,207,207,0.29)] px-[10px]">
-        <Search className="h-[14px] w-[14px] stroke-[#959595] opacity-50" strokeWidth={1.1} />
-        <span className="text-[13px] font-normal text-[#959595] opacity-50">Search</span>
+        <Search
+          className="h-[14px] w-[14px] stroke-[#959595] opacity-50"
+          strokeWidth={1.1}
+        />
+        <span className="text-[13px] font-normal text-[#959595] opacity-50">
+          Search
+        </span>
       </div>
 
       <div className="flex flex-col gap-[10px]">
-        <span className="text-[13.5px] font-normal text-[hsl(var(--grey))]">Main</span>
+        <span className="text-[13.5px] font-normal text-[hsl(var(--grey))]">
+          Main
+        </span>
         <div className="flex flex-col">
           {navItems.map((item) => (
             <Link
@@ -247,7 +254,9 @@ export function Sidebar() {
               </div>
               <span
                 className={`text-[13px] font-medium ${
-                  item.active ? "text-[hsl(var(--blue-black))]" : "text-[hsl(var(--med-grey))]"
+                  item.active
+                    ? "text-[hsl(var(--blue-black))]"
+                    : "text-[hsl(var(--med-grey))]"
                 }`}
               >
                 {item.label}
