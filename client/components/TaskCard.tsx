@@ -64,82 +64,85 @@ export function TaskCard({
       style={style}
       {...(isOverlay ? {} : listeners)}
       {...(isOverlay ? {} : attributes)}
-      className={`flex flex-col gap-[17px] rounded-[17px] bg-white p-[15px_13px] shadow-[0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)] ${
+      className={`${
         isOverlay ? "" : "cursor-grab active:cursor-grabbing touch-none"
       }`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="flex-1 text-[15.5px] font-medium leading-normal text-[#3E3A36]">
-          {title}
-        </h3>
-        <button className="flex h-4 w-4 items-center justify-center">
-          <IconDotsVertical
-            className="h-4 w-4 stroke-[#959595]"
-            strokeWidth={2.5}
+      <div className="flex flex-col gap-[17px] rounded-[11px] bg-white p-[15px_13px] shadow-overlay ">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="flex-1 text-[15px] font-medium leading-normal text-[#3E3A36]">
+            {title}
+          </h3>
+          <button className="flex h-4 w-4 items-center justify-center">
+            <IconDotsVertical
+              className="h-4 w-4 stroke-[#959595]"
+              strokeWidth={2.5}
+            />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-[15px]">
+          <div className="flex items-center gap-[5px]">
+            <p className="flex-1 text-[14px] font-normal leading-normal text-[hsl(var(--med-grey))]">
+              {description}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-[5px]">
+            {tags.map((tag, index) => (
+              <span
+                key={index}
+                className={`rounded-[5.5px] px-[5.5px] py-[3.5px] text-[12.5px] font-medium ${tagStyles[tag.variant]}`}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <svg className="w-full" height="2" xmlns="http://www.w3.org/2000/svg">
+          <line
+            x1="0"
+            y1="1"
+            x2="100%"
+            y2="1"
+            stroke="#959595"
+            strokeWidth="1.2"
+            strokeDasharray="6 4"
+            opacity="0.29"
           />
-        </button>
-      </div>
+        </svg>
 
-      <div className="flex flex-col gap-[15px]">
-        <div className="flex items-center gap-[5px]">
-          <IconFlag
-            className="h-[14px] w-[14px] stroke-[#959595]"
-            strokeWidth={2.5}
-          />
-          <span className="text-[13.5px] font-medium text-[#959595]">
-            {dueDate}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-[5px]">
-          <p className="flex-1 text-[14px] font-normal leading-normal text-[hsl(var(--med-grey))]">
-            {description}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-[5px]">
-          {tags.map((tag, index) => (
-            <span
-              key={index}
-              className={`rounded-[5.5px] px-[5.5px] py-[3.5px] text-[12.5px] font-medium ${tagStyles[tag.variant]}`}
-            >
-              {tag.name}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="w-full border-t-[1.2px] border-dashed border-[#959595] opacity-[0.29]"></div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-[9px]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-[9px]">
+            <div className="flex items-center gap-[3px]">
+              <IconMessageCircle
+                className="h-[15.5px] w-[15.5px] stroke-[#959595]"
+                strokeWidth={2.5}
+              />
+              <span className="text-[13.5px] font-medium text-[#959595]">
+                {comments}
+              </span>
+            </div>
+            <div className="flex items-center gap-[3px]">
+              <IconLink
+                className="h-[15.5px] w-[15.5px] stroke-[#959595]"
+                strokeWidth={2.5}
+              />
+              <span className="text-[13.5px] font-medium text-[#959595]">
+                {links}
+              </span>
+            </div>
+          </div>
           <div className="flex items-center gap-[3px]">
-            <IconMessageCircle
-              className="h-[14px] w-[14px] stroke-[#959595]"
+            <IconClock
+              className="h-[15.5px] w-[15.5px] stroke-[#959595]"
               strokeWidth={2.5}
             />
             <span className="text-[13.5px] font-medium text-[#959595]">
-              {comments}
+              {timeRemaining}
             </span>
           </div>
-          <div className="flex items-center gap-[3px]">
-            <IconLink
-              className="h-[14px] w-[14px] stroke-[#959595]"
-              strokeWidth={2.5}
-            />
-            <span className="text-[13.5px] font-medium text-[#959595]">
-              {links}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-[3px]">
-          <IconClock
-            className="h-[14px] w-[14px] stroke-[#959595]"
-            strokeWidth={2.5}
-          />
-          <span className="text-[13.5px] font-medium text-[#959595]">
-            {timeRemaining}
-          </span>
         </div>
       </div>
     </div>

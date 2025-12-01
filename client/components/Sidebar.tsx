@@ -1,15 +1,18 @@
 import { useState } from "react";
 import {
-  IconSearch,
   IconLayoutGrid,
   IconDashboard,
   IconTable,
-  IconCircle,
-  IconChevronLeft,
-  IconChevronRight,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarRightCollapse,
+  IconChevronDown,
+  IconChevronUp,
+  IconFolder,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import placeholderUser from "@/assets/placeholder-user.png";
+import datahubLogo from "@/assets/datahub-logo.png";
 
 interface NavItem {
   id: string;
@@ -20,10 +23,11 @@ interface NavItem {
 
 export function Sidebar() {
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isViewsCollapsed, setIsViewsCollapsed] = useState(false);
+  const [isWorkspacesCollapsed, setIsWorkspacesCollapsed] = useState(false);
 
-  const allNavItems: NavItem[] = [
+  const navItems: NavItem[] = [
     {
       id: "task-board",
       label: "Task Board",
@@ -44,139 +48,203 @@ export function Sidebar() {
     },
   ];
 
-  const navItems = searchQuery
-    ? allNavItems.filter((item) =>
-        item.label.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : allNavItems;
-
   return (
     <motion.div
-      className="flex h-screen flex-shrink-0 flex-col gap-5 bg-[#F7F6F6] p-[19px_15px_13px_15px] overflow-hidden"
+      className="flex h-screen flex-shrink-0 flex-col gap-5 bg-[#F7F6F6] p-[19px_15px_13px_15px] overflow-x-hidden overflow-y-auto"
       initial={false}
       animate={{
-        width: isCollapsed ? "70px" : "201px",
+        width: isCollapsed ? "70px" : "240px",
       }}
       transition={{
         duration: 0.3,
         ease: "easeInOut",
       }}
     >
-      <div className="flex items-center gap-1.5">
-        <div className="flex h-5 w-5 items-center justify-center flex-shrink-0">
-          <IconCircle className="h-4 w-4 fill-[#363636] fill-opacity-80 stroke-[#5A5A5A] stroke-2" />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1">
+          <AnimatePresence initial={false}>
+            {!isCollapsed && (
+              <motion.img
+                src={datahubLogo}
+                alt="Datahub logo"
+                className="ml-1 h-4 w-4 flex-shrink-0 object-contain"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+            )}
+          </AnimatePresence>
+          <AnimatePresence initial={false}>
+            {!isCollapsed && (
+              <motion.span
+                className="text-[15px] font-semibold text-[hsl(var(--blue-black))] whitespace-nowrap overflow-hidden"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                Datable
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
-        <AnimatePresence initial={false}>
-          {!isCollapsed && (
-            <motion.div
-              className="flex flex-1 items-center justify-between overflow-hidden"
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <span className="text-[15.5px] font-medium text-[hsl(var(--blue-black))] whitespace-nowrap">
-                DataHub
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex h-5 w-5 items-center justify-center text-[#626567] flex-shrink-0 hover:bg-white/50 rounded transition-colors"
+          className={`flex h-5 w-5 items-center justify-center text-[#626567] flex-shrink-0 hover:bg-white/50 rounded transition-colors ${
+            isCollapsed ? "mr-[10px]" : ""
+          }`}
         >
-          <motion.div
-            animate={{ rotate: isCollapsed ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {isCollapsed ? (
-              <IconChevronRight className="h-5 w-5" />
-            ) : (
-              <IconChevronLeft className="h-5 w-5" />
-            )}
-          </motion.div>
+          {isCollapsed ? (
+            <IconLayoutSidebarRightCollapse className="h-5 w-5" />
+          ) : (
+            <IconLayoutSidebarLeftCollapse className="h-5 w-5" />
+          )}
         </button>
       </div>
 
       <AnimatePresence initial={false}>
         {!isCollapsed && (
           <motion.div
-            className="flex h-[29px] items-center gap-[6px] rounded-md bg-[rgba(210,207,207,0.29)] px-[10px] overflow-hidden"
+            className="flex items-center gap-3 rounded-lg bg-white px-1 py-1 shadow-overlay"
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "29px" }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <IconSearch
-              className="h-[14px] w-[14px] stroke-[#959595] opacity-50 flex-shrink-0"
-              strokeWidth={1.1}
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSearchQuery(value);
-              }}
-              placeholder="Search"
-              className="flex-1 bg-transparent border-none outline-none text-[13px] font-normal text-[#959595] placeholder:text-[#959595] placeholder:opacity-50"
-            />
+            <div className="flex items-center gap-3 rounded-lg bg-[#F7F6F6] p-1 shadow-mini">
+              <img
+                src={placeholderUser}
+                alt="User profile"
+                className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+              />
+            </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-[14px] font-semibold text-[hsl(var(--blue-black))] truncate">
+                Jane Doe
+              </span>
+              <span className="text-[12px] font-normal text-[hsl(var(--med-grey))]">
+                Premium Tier
+              </span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="flex flex-col gap-[10px]">
-        <AnimatePresence initial={false}>
-          {!isCollapsed && (
-            <motion.span
-              className="text-[13.5px] font-normal text-[hsl(var(--grey))] overflow-hidden"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              Main
-            </motion.span>
-          )}
-        </AnimatePresence>
-        <div className="flex flex-col">
-          {navItems.map((item) => (
-            <Link
-              key={item.id}
-              to={item.id === "task-board" ? "/" : `/${item.id}`}
-              className={`flex h-[35px] items-center gap-[6px] rounded-[9px] px-[12px] ${
-                isCollapsed ? "justify-center" : "justify-start"
-              } ${
-                item.active
-                  ? "bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]"
-                  : ""
-              }`}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <div
-                className={`h-5 w-5 flex-shrink-0 ${item.active ? "text-[hsl(var(--blue-black))]" : "text-[hsl(var(--med-grey))]"}`}
+        <div className="flex flex-col gap-[5px]">
+          <AnimatePresence initial={false}>
+            {!isCollapsed && (
+              <motion.button
+                onClick={() => setIsViewsCollapsed(!isViewsCollapsed)}
+                className="flex items-center justify-between text-[13.5px] font-medium text-[hsl(var(--grey))] overflow-hidden"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
               >
-                {item.icon}
-              </div>
-              <AnimatePresence initial={false}>
-                {!isCollapsed && (
-                  <motion.span
-                    className={`text-[13px] font-medium overflow-hidden whitespace-nowrap ${
-                      item.active
-                        ? "text-[hsl(var(--blue-black))]"
-                        : "text-[hsl(var(--med-grey))]"
-                    }`}
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
+                <span className="text-[13.5px] font-normal">Views</span>
+                <motion.div
+                  animate={{ rotate: isViewsCollapsed ? -90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <IconChevronDown className="h-4 w-4" />
+                </motion.div>
+              </motion.button>
+            )}
+          </AnimatePresence>
+          <AnimatePresence initial={false}>
+            {(isCollapsed || !isViewsCollapsed) && (
+              <motion.div
+                className="flex flex-col"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {navItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.id === "task-board" ? "/" : `/${item.id}`}
+                    className={`flex h-[35px] items-center gap-[6px] rounded-[9px] px-[12px] ${
+                      isCollapsed ? "justify-center" : "justify-start"
+                    } ${item.active ? "bg-white shadow-overlay" : ""}`}
+                    title={isCollapsed ? item.label : undefined}
                   >
-                    {item.label}
-                  </motion.span>
+                    <div
+                      className={`h-5 w-5 flex-shrink-0 ${item.active ? "text-[hsl(var(--blue-black))]" : "text-[hsl(var(--med-grey))]"}`}
+                    >
+                      {item.icon}
+                    </div>
+                    <AnimatePresence initial={false}>
+                      {!isCollapsed && (
+                        <motion.span
+                          className={`text-[13px] font-medium overflow-hidden whitespace-nowrap ${
+                            item.active
+                              ? "text-[hsl(var(--blue-black))]"
+                              : "text-[hsl(var(--med-grey))]"
+                          }`}
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: "auto" }}
+                          exit={{ opacity: 0, width: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </Link>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <div className="flex flex-col gap-[5px]">
+          <AnimatePresence initial={false}>
+            {!isCollapsed && (
+              <motion.button
+                onClick={() => setIsWorkspacesCollapsed(!isWorkspacesCollapsed)}
+                className="flex items-center justify-between text-[13.5px] font-medium text-[hsl(var(--grey))] overflow-hidden"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <span className="text-[13.5px] font-normal">Workspaces</span>
+                <motion.div
+                  animate={{ rotate: isWorkspacesCollapsed ? -90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <IconChevronDown className="h-4 w-4" />
+                </motion.div>
+              </motion.button>
+            )}
+          </AnimatePresence>
+          <AnimatePresence initial={false}>
+            {!isCollapsed && !isWorkspacesCollapsed && (
+              <motion.div
+                className="flex flex-col"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {["Work", "Christmas 2025", "Table", "Batmizva"].map(
+                  (workspace) => (
+                    <button
+                      key={workspace}
+                      className="flex h-[35px] items-center gap-[6px] rounded-[9px] px-[12px] justify-start hover:bg-white/50 transition-colors"
+                    >
+                      <IconFolder className="h-5 w-5 flex-shrink-0 text-[hsl(var(--med-grey))]" />
+                      <span className="text-[13px] font-medium text-[hsl(var(--med-grey))] overflow-hidden whitespace-nowrap">
+                        {workspace}
+                      </span>
+                    </button>
+                  ),
                 )}
-              </AnimatePresence>
-            </Link>
-          ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>

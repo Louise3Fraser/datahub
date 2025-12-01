@@ -21,6 +21,7 @@ interface TaskColumnProps {
   color: string;
   tasks: Task[];
   columnId?: string;
+  isOver?: boolean;
 }
 
 export function TaskColumn({
@@ -29,16 +30,21 @@ export function TaskColumn({
   color,
   tasks,
   columnId,
+  isOver: isOverProp = false,
 }: TaskColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef, isOver: isOverDnd } = useDroppable({
     id: columnId || `column-${Math.random()}`,
   });
+
+  const isOver = isOverProp || isOverDnd;
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-1 h-fit min-w-[280px] flex-col gap-[17px] rounded-[23px] bg-[#F7F6F6] p-[19px_12px_12px_12px] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)] ${
-        isOver ? "ring-2 ring-blue-400 ring-offset-2" : ""
+      className={`flex flex-1 h-fit min-w-[280px] flex-col gap-[17px] rounded-[15px] p-[19px_12px_12px_12px] shadow-overlay transition-all ${
+        isOver
+          ? "border-2 border-blue-500/30 bg-blue-50"
+          : "border-2 border-transparent bg-[#F7F6F6]"
       }`}
     >
       <div className="flex items-center justify-between px-[10px]">
@@ -56,7 +62,7 @@ export function TaskColumn({
         </div>
       </div>
 
-      <div className="flex flex-col gap-[8.5px]">
+      <div className="flex flex-col gap-[12px]">
         {tasks.map((task, index) => (
           <TaskCard key={task.id || index} {...task} taskId={task.id} />
         ))}
