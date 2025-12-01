@@ -41,7 +41,7 @@ export function TaskColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-1 h-fit min-w-[280px] flex-col gap-[17px] rounded-[15px] p-[19px_12px_12px_12px] shadow-overlay transition-all ${
+      className={`flex flex-1 h-fit min-w-[280px] flex-col gap-[17px] rounded-[15px] p-[15px_5px_12px_5px] shadow-overlay transition-all ${
         isOver
           ? "border-2 border-blue-500/30 bg-blue-50"
           : "border-2 border-transparent bg-[#F7F6F6]"
@@ -62,7 +62,7 @@ export function TaskColumn({
         </div>
       </div>
 
-      <div className="flex flex-col gap-[12px]">
+      <div className="flex flex-col gap-[10px]">
         {tasks.map((task, index) => (
           <TaskCard key={task.id || index} {...task} taskId={task.id} />
         ))}

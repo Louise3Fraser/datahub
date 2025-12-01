@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   DndContext,
   DragEndEvent,
@@ -16,6 +17,8 @@ import { Task, Column } from "@/data/types";
 import { defaultColumns } from "@/data/defaultData";
 
 export default function TaskBoard() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const filters = ["All", "Work", "Planning", "Chores", "Social"];
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string>("All");
@@ -30,6 +33,32 @@ export default function TaskBoard() {
   );
 
   const [columns, setColumns] = useState<Column[]>(defaultColumns);
+
+  // Load tasks from localStorage on mount and when navigating back
+  useEffect(() => {
+    const storedTasks = localStorage.getItem("tasks");
+    if (storedTasks) {
+      const tasks = JSON.parse(storedTasks);
+      setColumns((prevColumns) => {
+        const updatedColumns = prevColumns.map((col) => {
+          const columnTasks = tasks.filter(
+            (task: Task & { columnId?: string }) => task.columnId === col.id,
+          );
+          // Merge with existing tasks, avoiding duplicates
+          const existingTaskIds = new Set(col.tasks.map((t) => t.id));
+          const newTasks = columnTasks.filter(
+            (task: Task) => !existingTaskIds.has(task.id),
+          );
+          return {
+            ...col,
+            tasks: [...col.tasks, ...newTasks],
+            count: col.tasks.length + newTasks.length,
+          };
+        });
+        return updatedColumns;
+      });
+    }
+  }, [location.pathname]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -150,7 +179,7 @@ export default function TaskBoard() {
     >
       <>
         <div className="flex flex-1 flex-col gap-[10px] bg-[#F7F6F6] p-[9px_8px] overflow-hidden min-h-0">
-          <div className="flex flex-1 flex-col gap-[30px] rounded-2xl bg-white p-[35px] shadow-overlay overflow-auto min-h-0">
+          <div className="flex flex-1 flex-col gap-[30px] rounded-xl bg-white p-[35px] shadow-overlay overflow-auto min-h-0">
             <div className="flex flex-col gap-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-1">
@@ -165,7 +194,10 @@ export default function TaskBoard() {
                       Share +
                     </span>
                   </button>
-                  <button className="flex h-[30px] items-center gap-[6px] rounded-[8px] bg-[var(--blue-black)] px-0 py-[3px] shadow-overlay">
+                  <button
+                    onClick={() => navigate("/add-task")}
+                    className="flex h-[30px] items-center gap-[6px] rounded-[8px] bg-[var(--blue-black)] px-0 py-[3px] shadow-overlay hover:opacity-90 transition-opacity"
+                  >
                     <span className="rounded-[7px] px-[10px] py-[1px] text-[13.5px] font-normal text-white">
                       New Task +
                     </span>
