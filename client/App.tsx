@@ -7,6 +7,7 @@ import TaskBoard from "./pages/TaskBoard";
 import Dashboard from "./pages/Dashboard";
 import TableView from "./pages/TableView";
 import NotFound from "./pages/NotFound";
+import AddTask from "./pages/AddTask";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
           <Route path="/" element={<TaskBoard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/table-view" element={<TableView />} />
+          <Route path="/add-task" element={<AddTask />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
