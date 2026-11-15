@@ -1,26 +1,17 @@
 import { useDroppable } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { TaskCard } from "./TaskCard";
-
-interface Task {
-  id?: string;
-  title: string;
-  dueDate: string;
-  description: string;
-  tags: Array<{
-    name: string;
-    variant: "work" | "planning" | "chores" | "social" | "health";
-  }>;
-  comments: number;
-  links: number;
-  timeRemaining: string;
-}
+import { Task } from "@/data/types";
 
 interface TaskColumnProps {
   title: string;
   count: number;
   color: string;
   tasks: Task[];
-  columnId?: string;
+  columnId: string;
   isOver?: boolean;
 }
 
@@ -30,21 +21,17 @@ export function TaskColumn({
   color,
   tasks,
   columnId,
-  isOver: isOverProp = false,
+  isOver = false,
 }: TaskColumnProps) {
-  const { setNodeRef, isOver: isOverDnd } = useDroppable({
-    id: columnId || `column-${Math.random()}`,
-  });
-
-  const isOver = isOverProp || isOverDnd;
+  const { setNodeRef } = useDroppable({ id: columnId });
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-1 h-fit min-w-[280px] flex-col gap-[17px] rounded-[15px] p-[15px_5px_12px_5px] shadow-overlay transition-all ${
+      className={`flex flex-1 h-fit min-w-[280px] flex-col gap-[17px] rounded-[15px] border-2 p-[15px_5px_12px_5px] shadow-overlay transition-[background-color,border-color] duration-300 ease-out ${
         isOver
-          ? "border-2 border-blue-500/30 bg-blue-50"
-          : "border-2 border-transparent bg-[#F7F6F6]"
+          ? "border-blue-500/25 bg-blue-50/70"
+          : "border-transparent bg-[#F7F6F6]"
       }`}
     >
       <div className="flex items-center justify-between px-[10px]">
@@ -62,11 +49,18 @@ export function TaskColumn({
         </div>
       </div>
 
-      <div className="flex flex-col gap-[10px]">
-        {tasks.map((task, index) => (
-          <TaskCard key={task.id || index} {...task} taskId={task.id} />
-        ))}
-      </div>
+      <SortableContext
+        id={columnId}
+        items={tasks.map((t) => t.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {/* min-height keeps empty columns a comfortable drop target */}
+        <div className="flex min-h-[60px] flex-col gap-[10px]">
+          {tasks.map((task) => (
+            <TaskCard key={task.id} {...task} taskId={task.id} />
+          ))}
+        </div>
+      </SortableContext>
     </div>
   );
 }
