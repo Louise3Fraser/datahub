@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   DndContext,
@@ -6,15 +6,58 @@ import {
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
+  DropAnimation,
+  CollisionDetection,
+  KeyboardSensor,
   PointerSensor,
+  UniqueIdentifier,
+  closestCenter,
+  defaultDropAnimationSideEffects,
+  getFirstCollision,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
 import { TaskColumn } from "@/components/TaskColumn";
-import { TaskCard } from "@/components/TaskCard";
+import { TaskCard, SORT_TRANSITION } from "@/components/TaskCard";
 import { Task, Column } from "@/data/types";
 import { defaultColumns } from "@/data/defaultData";
+
+const RESTING_SHADOW =
+  "0 0px 0px 0px rgba(0,0,0,0), 0 0px 0px 0px rgba(0,0,0,0)";
+const LIFTED_SHADOW =
+  "0 6px 12px -4px rgba(0,0,0,0.14), 0 14px 28px -8px rgba(0,0,0,0.12)";
+
+// On drop, glide the overlay into the card's slot while untilting and
+// lowering it, so it lands instead of snapping.
+const dropAnimation: DropAnimation = {
+  duration: SORT_TRANSITION.duration,
+  easing: SORT_TRANSITION.easing,
+  sideEffects: (params) => {
+    const tilt =
+      params.dragOverlay.node.querySelector<HTMLElement>("[data-drag-tilt]");
+    tilt?.animate(
+      [
+        {
+          transform: getComputedStyle(tilt).transform,
+          boxShadow: LIFTED_SHADOW,
+        },
+        { transform: "none", boxShadow: RESTING_SHADOW },
+      ],
+      {
+        duration: SORT_TRANSITION.duration,
+        easing: SORT_TRANSITION.easing,
+        fill: "forwards",
+      },
+    );
+    return defaultDropAnimationSideEffects({
+      styles: { active: { opacity: "0" } },
+    })(params);
+  },
+};
 
 export default function TaskBoard() {
   const navigate = useNavigate();
@@ -27,8 +70,11 @@ export default function TaskBoard() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
 
@@ -60,78 +106,148 @@ export default function TaskBoard() {
     }
   }, [location.pathname]);
 
+  // Snapshot so Escape / cancel can restore the board exactly.
+  const columnsBeforeDrag = useRef<Column[] | null>(null);
+  const lastOverId = useRef<UniqueIdentifier | null>(null);
+  const recentlyMovedToNewColumn = useRef(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      recentlyMovedToNewColumn.current = false;
+    });
+  }, [columns]);
+
+  const findColumnId = (id: UniqueIdentifier): string | null => {
+    if (columns.some((col) => col.id === id)) return id as string;
+    return (
+      columns.find((col) => col.tasks.some((task) => task.id === id))?.id ??
+      null
+    );
+  };
+
+  // Pointer-first collision detection: find the column under the pointer,
+  // then the closest card inside it. Avoids the jitter you get from plain
+  // rect intersection when cards jump between columns.
+  const collisionDetection: CollisionDetection = useCallback(
+    (args) => {
+      const pointerHits = pointerWithin(args);
+      const hits =
+        pointerHits.length > 0 ? pointerHits : rectIntersection(args);
+      let overId = getFirstCollision(hits, "id");
+
+      if (overId != null) {
+        const column = columns.find((col) => col.id === overId);
+        if (column && column.tasks.length > 0) {
+          const taskIds = new Set<UniqueIdentifier>(
+            column.tasks.map((t) => t.id),
+          );
+          overId =
+            closestCenter({
+              ...args,
+              droppableContainers: args.droppableContainers.filter((c) =>
+                taskIds.has(c.id),
+              ),
+            })[0]?.id ?? overId;
+        }
+        lastOverId.current = overId;
+        return [{ id: overId }];
+      }
+
+      // Right after a card changes column the layout is still shifting;
+      // stick with the last target so it doesn't flicker back.
+      if (recentlyMovedToNewColumn.current) {
+        lastOverId.current = args.active.id;
+      }
+      return lastOverId.current ? [{ id: lastOverId.current }] : [];
+    },
+    [columns],
+  );
+
   const handleDragStart = (event: DragStartEvent) => {
+    columnsBeforeDrag.current = columns;
     setActiveId(event.active.id as string);
+    setOverColumnId(findColumnId(event.active.id));
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event;
-    if (over && typeof over.id === "string") {
-      // Only highlight if hovering over a column, not a task
-      const isColumn = columns.some((col) => col.id === over.id);
-      if (isColumn) {
-        setOverColumnId(over.id);
-      } else {
-        // Find the column that contains this task
-        const column = columns.find((col) =>
-          col.tasks.some((task) => task.id === over.id),
-        );
-        if (column) {
-          setOverColumnId(column.id);
-        } else {
-          setOverColumnId(null);
-        }
-      }
-    } else {
+    const { active, over } = event;
+    if (!over) {
       setOverColumnId(null);
+      return;
     }
+
+    const fromColumnId = findColumnId(active.id);
+    const toColumnId = findColumnId(over.id);
+    setOverColumnId(toColumnId);
+
+    if (!fromColumnId || !toColumnId || fromColumnId === toColumnId) return;
+
+    // Move the card into the hovered column *during* the drag so the
+    // other cards smoothly make room for it.
+    setColumns((prev) => {
+      const from = prev.find((c) => c.id === fromColumnId);
+      const to = prev.find((c) => c.id === toColumnId);
+      const task = from?.tasks.find((t) => t.id === active.id);
+      if (!from || !to || !task) return prev;
+
+      let newIndex = to.tasks.length;
+      if (over.id !== toColumnId) {
+        const overIndex = to.tasks.findIndex((t) => t.id === over.id);
+        const translated = active.rect.current.translated;
+        const isBelowOver =
+          translated != null &&
+          translated.top > over.rect.top + over.rect.height / 2;
+        newIndex = overIndex >= 0 ? overIndex + (isBelowOver ? 1 : 0) : 0;
+      }
+
+      recentlyMovedToNewColumn.current = true;
+
+      return prev.map((col) => {
+        if (col.id === fromColumnId) {
+          const tasks = col.tasks.filter((t) => t.id !== active.id);
+          return { ...col, tasks, count: tasks.length };
+        }
+        if (col.id === toColumnId) {
+          const tasks = [
+            ...col.tasks.slice(0, newIndex),
+            task,
+            ...col.tasks.slice(newIndex),
+          ];
+          return { ...col, tasks, count: tasks.length };
+        }
+        return col;
+      });
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
     setOverColumnId(null);
+    columnsBeforeDrag.current = null;
 
     if (!over) return;
 
-    const taskId = active.id as string;
-    const targetColumnId = over.id as string;
+    const columnId = findColumnId(active.id);
+    if (!columnId || columnId !== findColumnId(over.id)) return;
 
-    if (taskId.startsWith("task-") && targetColumnId) {
-      setColumns((prevColumns) => {
-        const newColumns = [...prevColumns];
-        let taskToMove: Task | null = null;
-        let sourceColumnIndex = -1;
+    // Reorder within the column.
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (col.id !== columnId) return col;
+        const oldIndex = col.tasks.findIndex((t) => t.id === active.id);
+        const newIndex = col.tasks.findIndex((t) => t.id === over.id);
+        if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return col;
+        return { ...col, tasks: arrayMove(col.tasks, oldIndex, newIndex) };
+      }),
+    );
+  };
 
-        for (let i = 0; i < newColumns.length; i++) {
-          const taskIndex = newColumns[i].tasks.findIndex(
-            (t) => t.id === taskId,
-          );
-
-          if (taskIndex !== -1) {
-            taskToMove = newColumns[i].tasks[taskIndex];
-            sourceColumnIndex = i;
-            newColumns[i].tasks = newColumns[i].tasks.filter(
-              (t) => t.id !== taskId,
-            );
-            newColumns[i].count = newColumns[i].tasks.length;
-          }
-        }
-
-        if (taskToMove) {
-          const targetColumnIndex = newColumns.findIndex(
-            (c) => c.id === targetColumnId,
-          );
-          if (targetColumnIndex !== -1) {
-            newColumns[targetColumnIndex].tasks.unshift(taskToMove);
-            newColumns[targetColumnIndex].count =
-              newColumns[targetColumnIndex].tasks.length;
-          }
-        }
-
-        return newColumns;
-      });
-    }
+  const handleDragCancel = () => {
+    if (columnsBeforeDrag.current) setColumns(columnsBeforeDrag.current);
+    columnsBeforeDrag.current = null;
+    setActiveId(null);
+    setOverColumnId(null);
   };
 
   const activeTask = activeId
@@ -176,6 +292,8 @@ export default function TaskBoard() {
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+      collisionDetection={collisionDetection}
     >
       <>
         <div className="flex flex-1 flex-col gap-[10px] bg-[#F7F6F6] p-[9px_8px] overflow-hidden min-h-0">
@@ -249,11 +367,17 @@ export default function TaskBoard() {
             </div>
           </div>
         </div>
-        <DragOverlay>
+        <DragOverlay dropAnimation={dropAnimation}>
           {activeTask ? (
-            <div className="rotate-2 shadow-[0_4px_8px_-2px_rgba(0,0,0,0.12),0_8px_16px_-4px_rgba(0,0,0,0.08)]">
+            <motion.div
+              data-drag-tilt
+              className="cursor-grabbing rounded-[11px]"
+              initial={{ rotate: 0, scale: 1, boxShadow: RESTING_SHADOW }}
+              animate={{ rotate: 2, scale: 1.03, boxShadow: LIFTED_SHADOW }}
+              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+            >
               <TaskCard {...activeTask} taskId={activeTask.id} isOverlay />
-            </div>
+            </motion.div>
           ) : null}
         </DragOverlay>
       </>

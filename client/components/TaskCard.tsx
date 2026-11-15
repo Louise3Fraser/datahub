@@ -1,4 +1,8 @@
-import { useDraggable } from "@dnd-kit/core";
+import {
+  useSortable,
+  defaultAnimateLayoutChanges,
+  type AnimateLayoutChanges,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   IconClock,
@@ -34,40 +38,68 @@ const tagStyles = {
   health: "bg-[hsl(var(--tag-health-bg))] text-[hsl(var(--tag-health-text))]",
 };
 
-export function TaskCard({
+// Keep animating after a drop so cards glide into their final slot
+// instead of snapping.
+const animateLayoutChanges: AnimateLayoutChanges = (args) =>
+  defaultAnimateLayoutChanges({ ...args, wasDragging: true });
+
+export const SORT_TRANSITION = {
+  duration: 260,
+  easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+};
+
+export function TaskCard(props: TaskCardProps) {
+  if (props.isOverlay || !props.taskId) return <TaskCardView {...props} />;
+  return <SortableTaskCard {...props} taskId={props.taskId} />;
+}
+
+function SortableTaskCard(props: TaskCardProps & { taskId: string }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: props.taskId,
+    animateLayoutChanges,
+    transition: SORT_TRANSITION,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
+      }}
+      {...listeners}
+      {...attributes}
+      className="relative cursor-grab touch-none outline-none active:cursor-grabbing"
+    >
+      {/* While dragging, the original stays put as a soft placeholder;
+          the DragOverlay is what follows the pointer. */}
+      <div className={`${isDragging ? "opacity-0" : "opacity-100"}`}>
+        <TaskCardView {...props} />
+      </div>
+      {isDragging && (
+        <div className="absolute inset-0 rounded-[11px] border-2 border-dashed border-[#d9d6d3] bg-[#efedeb]" />
+      )}
+    </div>
+  );
+}
+
+function TaskCardView({
   title,
-  dueDate,
   description,
   tags,
   comments,
   links,
   timeRemaining,
-  taskId,
-  isOverlay = false,
 }: TaskCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: taskId || `task-${Math.random()}`,
-      disabled: isOverlay,
-    });
-
-  const style = isOverlay
-    ? {}
-    : {
-        transform: CSS.Translate.toString(transform),
-        opacity: isDragging ? 0.5 : 1,
-      };
-
   return (
-    <div
-      ref={isOverlay ? undefined : setNodeRef}
-      style={style}
-      {...(isOverlay ? {} : listeners)}
-      {...(isOverlay ? {} : attributes)}
-      className={`${
-        isOverlay ? "" : "cursor-grab active:cursor-grabbing touch-none"
-      }`}
-    >
+    <div>
       <div className="flex flex-col gap-[17px] rounded-[11px] bg-white p-[15px_13px] shadow-overlay ">
         <div className="flex items-center justify-between gap-3">
           <h3 className="flex-1 text-[15px] font-medium leading-normal text-[#3E3A36]">
